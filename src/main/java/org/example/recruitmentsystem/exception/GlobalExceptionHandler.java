@@ -40,10 +40,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception exception) {
+        exception.printStackTrace();
+
         ErrorCode errorCode = ErrorCode.UNCATEGORIZED_ERROR;
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponse.error(errorCode.getMessage(), errorCode.getCode()));
+                .body(ApiResponse.error(exception.getMessage(), errorCode.getCode()));
     }
 }

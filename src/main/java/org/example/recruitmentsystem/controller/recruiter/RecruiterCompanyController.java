@@ -1,4 +1,4 @@
-package org.example.recruitmentsystem.controller;
+package org.example.recruitmentsystem.controller.recruiter;
 
 import lombok.RequiredArgsConstructor;
 import org.example.recruitmentsystem.common.ApiResponse;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/recruiter/company")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('RECRUITER')")
-public class CompanyController {
+public class RecruiterCompanyController {
 
     private final CompanyService companyService;
 
@@ -22,9 +22,7 @@ public class CompanyController {
     public ApiResponse<CompanyResponse> getMyCompany(
             @AuthenticationPrincipal Jwt jwt
     ) {
-        String email = jwt.getSubject();
-
-        CompanyResponse response = companyService.getMyCompany(email);
+        CompanyResponse response = companyService.getMyCompany(jwt.getSubject());
 
         return ApiResponse.success("Lấy thông tin công ty thành công", response);
     }
@@ -34,9 +32,7 @@ public class CompanyController {
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody CompanyRequest request
     ) {
-        String email = jwt.getSubject();
-
-        CompanyResponse response = companyService.updateMyCompany(email, request);
+        CompanyResponse response = companyService.updateMyCompany(jwt.getSubject(), request);
 
         return ApiResponse.success("Cập nhật thông tin công ty thành công", response);
     }

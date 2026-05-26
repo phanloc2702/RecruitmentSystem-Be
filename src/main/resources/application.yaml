@@ -13,10 +13,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
 jwt:
   signerKey: "tZwa1Se0sysrRZ9Bv0NOs4CWEUK2JTA8rDk9etuliNEl920NUbOzeUcsPHM88btR"

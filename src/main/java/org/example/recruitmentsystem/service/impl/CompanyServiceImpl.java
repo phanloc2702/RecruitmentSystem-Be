@@ -20,6 +20,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.example.recruitmentsystem.specification.CompanySpecification;
 import org.springframework.data.jpa.domain.Specification;
+import org.example.recruitmentsystem.common.PageResponse;
+import org.example.recruitmentsystem.common.utils.PaginationUtils;
+import org.example.recruitmentsystem.dto.request.CompanyFilterRequest;
+import org.example.recruitmentsystem.specification.CompanySpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 @Service
 @RequiredArgsConstructor
 public class CompanyServiceImpl implements CompanyService {
@@ -66,21 +73,24 @@ public class CompanyServiceImpl implements CompanyService {
         return companyMapper.toResponse(savedCompany);
     }
     @Override
-    public PageResponse<CompanyResponse> getCompanies(String keyword, String industry, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public PageResponse<CompanyResponse> getCompanies(CompanyFilterRequest request) {
+
+        Pageable pageable = PaginationUtils.buildPageable(request);
 
         Specification<Company> specification = Specification
                 .where(CompanySpecification.hasStatus(CompanyStatus.APPROVED))
-                .and(CompanySpecification.keywordContains(keyword))
-                .and(CompanySpecification.industryContains(industry));
+                .and(CompanySpecification.keywordContains(request.getKeyword()))
+                .and(CompanySpecification.industryContains(request.getIndustry()));
 
         Page<Company> companyPage = companyRepository.findAll(specification, pageable);
 
         return PageResponse.<CompanyResponse>builder()
-                .content(companyPage.getContent()
-                        .stream()
-                        .map(companyMapper::toResponse)
-                        .toList())
+                .content(
+                        companyPage.getContent()
+                                .stream()
+                                .map(companyMapper::toResponse)
+                                .toList()
+                )
                 .currentPage(companyPage.getNumber())
                 .totalPages(companyPage.getTotalPages())
                 .totalElements(companyPage.getTotalElements())
