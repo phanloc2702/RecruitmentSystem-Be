@@ -4,6 +4,7 @@ import org.example.recruitmentsystem.common.PageResponse;
 import org.example.recruitmentsystem.dto.request.CompanyFilterRequest;
 import org.example.recruitmentsystem.dto.request.CompanyRequest;
 import org.example.recruitmentsystem.dto.response.CompanyResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface CompanyService {
 
@@ -14,4 +15,5 @@ public interface CompanyService {
     PageResponse<CompanyResponse> getCompanies(CompanyFilterRequest request);
 
     CompanyResponse getCompanyById(Long id);
+    CompanyResponse uploadLogo(String email, MultipartFile file);
 }

@@ -16,4 +16,9 @@ public class ApplicationFilterRequest extends PaginationRequest {
             message = "Trường sắp xếp không hợp lệ"
     )
     private String sortBy = "appliedAt";
+
+    @Override
+    public String getSafeSortBy() {
+        return sortBy == null || sortBy.isBlank() ? "appliedAt" : sortBy;
+    }
 }

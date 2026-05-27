@@ -58,6 +58,9 @@ public class CandidateProfile {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
+    @Column(name = "avatar_object_name", length = 500)
+    private String avatarObjectName;
+
     @Column(name = "expected_salary_min")
     private BigDecimal expectedSalaryMin;
 

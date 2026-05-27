@@ -46,14 +46,18 @@ public class ApplicationServiceImpl implements ApplicationService {
         JobPost jobPost = jobPostRepository.findById(request.getJobPostId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
 
-        if (jobPost.getStatus() != JobPostStatus.OPEN
-                || jobPost.getApprovalStatus() != ApprovalStatus.APPROVED) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        if (jobPost.getStatus() != JobPostStatus.OPEN) {
+            throw new BusinessException(ErrorCode.JOB_NOT_OPEN);
+        }
+
+        if (jobPost.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            throw new BusinessException(ErrorCode.JOB_NOT_APPROVED);
         }
 
         if (applicationRepository.existsByJobPostAndCandidate(jobPost, candidate)) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+            throw new BusinessException(ErrorCode.APPLICATION_ALREADY_EXISTS);
         }
+
         CandidateCv selectedCv = null;
 
         if (request.getCvId() != null) {
@@ -62,8 +66,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                             request.getCvId(),
                             candidate.getId()
                     )
-                    .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.CV_NOT_FOUND));
         }
+
         Application application = Application.builder()
                 .jobPost(jobPost)
                 .candidate(candidate)

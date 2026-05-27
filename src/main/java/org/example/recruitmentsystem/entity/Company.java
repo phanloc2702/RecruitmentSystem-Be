@@ -51,6 +51,12 @@ public class Company {
     @Column(name = "company_size", length = 50)
     private String companySize;
 
+    @Column(name = "logo_object_name", length = 500)
+    private String logoObjectName;
+
+    @Column(name = "banner_object_name", length = 500)
+    private String bannerObjectName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default

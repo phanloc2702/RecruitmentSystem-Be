@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/recruiter/company")
@@ -35,5 +36,21 @@ public class RecruiterCompanyController {
         CompanyResponse response = companyService.updateMyCompany(jwt.getSubject(), request);
 
         return ApiResponse.success("Cập nhật thông tin công ty thành công", response);
+    }
+    @PostMapping("/logo")
+    public ApiResponse<CompanyResponse> uploadLogo(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam("file") MultipartFile file
+    ) {
+
+        CompanyResponse response = companyService.uploadLogo(
+                jwt.getSubject(),
+                file
+        );
+
+        return ApiResponse.success(
+                "Tải logo công ty thành công",
+                response
+        );
     }
 }

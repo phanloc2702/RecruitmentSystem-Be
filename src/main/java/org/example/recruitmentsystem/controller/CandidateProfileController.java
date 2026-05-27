@@ -6,10 +6,12 @@ import org.example.recruitmentsystem.dto.request.CandidateProfileRequest;
 import org.example.recruitmentsystem.dto.response.CandidateProfileResponse;
 import org.example.recruitmentsystem.service.CandidateProfileService;
 import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @RequestMapping("/api/candidate/profile")
 @RequiredArgsConstructor
@@ -39,5 +41,22 @@ public class CandidateProfileController {
         CandidateProfileResponse response = candidateProfileService.updateMyProfile(email, request);
 
         return ApiResponse.success("Cập nhật hồ sơ ứng viên thành công", response);
+    }
+    @PostMapping("/avatar")
+    public ApiResponse<CandidateProfileResponse> uploadAvatar(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam("file") MultipartFile file
+    ) {
+        String email = jwt.getSubject();
+
+        CandidateProfileResponse response = candidateProfileService.uploadAvatar(
+                email,
+                file
+        );
+
+        return ApiResponse.success(
+                "Tải ảnh đại diện thành công",
+                response
+        );
     }
 }

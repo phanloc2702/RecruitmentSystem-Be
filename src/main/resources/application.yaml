@@ -20,3 +20,9 @@ spring:
 
 jwt:
   signerKey: "tZwa1Se0sysrRZ9Bv0NOs4CWEUK2JTA8rDk9etuliNEl920NUbOzeUcsPHM88btR"
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-name: recruitment

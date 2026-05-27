@@ -12,7 +12,9 @@ import org.example.recruitmentsystem.mapper.CompanyMapper;
 import org.example.recruitmentsystem.repository.CompanyRepository;
 import org.example.recruitmentsystem.repository.UserRepository;
 import org.example.recruitmentsystem.service.CompanyService;
+import org.example.recruitmentsystem.service.FileStorageService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.example.recruitmentsystem.common.PageResponse;
 import org.springframework.data.domain.Page;
@@ -27,6 +29,8 @@ import org.example.recruitmentsystem.specification.CompanySpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.multipart.MultipartFile;
+
 @Service
 @RequiredArgsConstructor
 public class CompanyServiceImpl implements CompanyService {
@@ -34,7 +38,7 @@ public class CompanyServiceImpl implements CompanyService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper;
-
+    private final FileStorageService fileStorageService;
     @Override
     public CompanyResponse getMyCompany(String email) {
         User recruiter = userRepository.findByEmail(email)
@@ -107,5 +111,65 @@ public class CompanyServiceImpl implements CompanyService {
         }
 
         return companyMapper.toResponse(company);
+    }
+    @Override
+    @Transactional
+    public CompanyResponse uploadLogo(
+            String email,
+            MultipartFile file
+    ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Company company = companyRepository.findByRecruiter(user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        validateImageFile(file);
+
+        String oldObjectName = company.getLogoObjectName();
+
+        String newObjectName = fileStorageService.uploadFile(
+                file,
+                "company-logos"
+        );
+
+        String logoUrl = fileStorageService.getFileUrl(
+                newObjectName
+        );
+
+        company.setLogoObjectName(newObjectName);
+        company.setLogoUrl(logoUrl);
+
+        Company savedCompany = companyRepository.save(company);
+
+        if (oldObjectName != null &&
+                !oldObjectName.isBlank()) {
+
+            fileStorageService.deleteFile(oldObjectName);
+        }
+
+        return companyMapper.toResponse(savedCompany);
+    }
+    private void validateImageFile(MultipartFile file) {
+
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        long maxSize = 5 * 1024 * 1024;
+
+        if (file.getSize() > maxSize) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        String contentType = file.getContentType();
+
+        if (contentType == null ||
+                !(contentType.equals("image/jpeg")
+                        || contentType.equals("image/png")
+                        || contentType.equals("image/webp"))) {
+
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
     }
 }

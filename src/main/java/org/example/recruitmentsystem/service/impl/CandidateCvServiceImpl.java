@@ -17,7 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.UUID;
+
+import org.example.recruitmentsystem.service.FileStorageService;
 
 @Service
 @RequiredArgsConstructor
@@ -27,14 +28,24 @@ public class CandidateCvServiceImpl implements CandidateCvService {
     private final CandidateProfileRepository candidateProfileRepository;
     private final CandidateCvRepository candidateCvRepository;
     private final CandidateCvMapper candidateCvMapper;
-
+    private final FileStorageService fileStorageService;
     @Override
     public List<CandidateCvResponse> getMyCvs(String email) {
         CandidateProfile candidate = getCandidateProfile(email);
 
         return candidateCvRepository.findByCandidateIdOrderByCreatedAtDesc(candidate.getId())
                 .stream()
-                .map(candidateCvMapper::toResponse)
+                .map(cv -> {
+                    CandidateCvResponse response = candidateCvMapper.toResponse(cv);
+
+                    response.setFileUrl(
+                            fileStorageService.getFileUrl(
+                                    cv.getObjectName()
+                            )
+                    );
+
+                    return response;
+                })
                 .toList();
     }
 
@@ -53,13 +64,13 @@ public class CandidateCvServiceImpl implements CandidateCvService {
         String fileType = file.getContentType();
         Long fileSize = file.getSize();
 
-        String fakeFileUrl = "/uploads/cvs/" + UUID.randomUUID() + "-" + originalFileName;
+        String objectName = fileStorageService.uploadFile(file, "candidate-cvs");
 
         CandidateCv candidateCv = CandidateCv.builder()
                 .candidate(candidate)
                 .title(title)
                 .originalFileName(originalFileName)
-                .fileUrl(fakeFileUrl)
+                .objectName(objectName)
                 .fileType(fileType)
                 .fileSize(fileSize)
                 .isDefault(false)
@@ -71,7 +82,9 @@ public class CandidateCvServiceImpl implements CandidateCvService {
 
         CandidateCv savedCv = candidateCvRepository.save(candidateCv);
 
-        return candidateCvMapper.toResponse(savedCv);
+        CandidateCvResponse response = candidateCvMapper.toResponse(savedCv);
+        response.setFileUrl(fileStorageService.getFileUrl(savedCv.getObjectName()));
+        return response;
     }
 
     @Override
@@ -94,7 +107,15 @@ public class CandidateCvServiceImpl implements CandidateCvService {
 
         CandidateCv savedCv = candidateCvRepository.save(selectedCv);
 
-        return candidateCvMapper.toResponse(savedCv);
+        CandidateCvResponse response = candidateCvMapper.toResponse(savedCv);
+
+        response.setFileUrl(
+                fileStorageService.getFileUrl(
+                        savedCv.getObjectName()
+                )
+        );
+
+        return response;
     }
 
     @Override
@@ -104,7 +125,9 @@ public class CandidateCvServiceImpl implements CandidateCvService {
 
         CandidateCv cv = candidateCvRepository.findByIdAndCandidateId(cvId, candidate.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
-
+        fileStorageService.deleteFile(
+                cv.getObjectName()
+        );
         candidateCvRepository.delete(cv);
     }
 

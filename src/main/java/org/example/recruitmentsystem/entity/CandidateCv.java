@@ -28,8 +28,8 @@ public class CandidateCv {
     @Column(name = "original_file_name", nullable = false, length = 255)
     private String originalFileName;
 
-    @Column(name = "file_url", length = 500)
-    private String fileUrl;
+    @Column(name = "object_name", nullable = false)
+    private String objectName;
 
     @Column(name = "file_type", length = 100)
     private String fileType;
