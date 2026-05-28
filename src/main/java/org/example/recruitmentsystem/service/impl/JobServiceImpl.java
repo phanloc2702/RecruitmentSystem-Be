@@ -1,7 +1,10 @@
 package org.example.recruitmentsystem.service.impl;
 
 import org.example.recruitmentsystem.dto.request.RecruiterJobFilterRequest;
+import org.example.recruitmentsystem.dto.response.JobFilterOptionsResponse;
 import org.example.recruitmentsystem.entity.User;
+import org.example.recruitmentsystem.enumtype.EmploymentType;
+import org.example.recruitmentsystem.enumtype.ExperienceLevel;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.recruitmentsystem.common.PageResponse;
@@ -30,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -54,7 +58,8 @@ public class JobServiceImpl implements JobService {
                 .and(JobPostSpecification.hasEmploymentType(request.getEmploymentType()))
                 .and(JobPostSpecification.hasCategoryId(request.getCategoryId()))
                 .and(JobPostSpecification.salaryMinGreaterThanOrEqual(request.getSalaryMin()))
-                .and(JobPostSpecification.salaryMaxLessThanOrEqual(request.getSalaryMax()));
+                .and(JobPostSpecification.salaryMaxLessThanOrEqual(request.getSalaryMax()))
+                .and(JobPostSpecification.hasCompanyId(request.getCompanyId()));
 
         Page<JobPost> jobPage = jobPostRepository.findAll(specification, pageable);
 
@@ -207,5 +212,47 @@ public class JobServiceImpl implements JobService {
         if (!jobPost.getCompany().getId().equals(company.getId())) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
+    }
+    @Override
+    public JobFilterOptionsResponse getFilterOptions() {
+        return JobFilterOptionsResponse.builder()
+                .locations(jobPostRepository.findDistinctOpenApprovedLocations())
+                .employmentTypes(
+                        Arrays.stream(EmploymentType.values())
+                                .map(Enum::name)
+                                .toList()
+                )
+                .experienceLevels(
+                        Arrays.stream(ExperienceLevel.values())
+                                .map(Enum::name)
+                                .toList()
+                )
+                .build();
+    }
+    @Override
+    @Transactional
+    public JobResponse updateJobStatus(
+            String email,
+            Long id,
+            JobPostStatus status
+    ) {
+        User recruiter = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Company company = companyRepository.findByRecruiter(recruiter)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        JobPost jobPost = jobPostRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        if (!jobPost.getCompany().getId().equals(company.getId())) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        jobPost.setStatus(status);
+
+        JobPost savedJobPost = jobPostRepository.save(jobPost);
+
+        return jobPostMapper.toResponse(savedJobPost);
     }
 }

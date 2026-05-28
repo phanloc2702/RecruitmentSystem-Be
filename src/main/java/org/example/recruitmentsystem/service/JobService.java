@@ -5,7 +5,9 @@ import org.example.recruitmentsystem.dto.request.JobPostFilterRequest;
 import org.example.recruitmentsystem.dto.request.RecruiterJobFilterRequest;
 import org.example.recruitmentsystem.dto.request.RecruiterJobRequest;
 import org.example.recruitmentsystem.dto.response.JobCategoryResponse;
+import org.example.recruitmentsystem.dto.response.JobFilterOptionsResponse;
 import org.example.recruitmentsystem.dto.response.JobResponse;
+import org.example.recruitmentsystem.enumtype.JobPostStatus;
 
 import java.util.List;
 
@@ -17,7 +19,7 @@ public interface JobService {
     JobResponse getJobById(Long id);
 
     List<JobCategoryResponse> getCategories();
-
+    JobFilterOptionsResponse getFilterOptions();
     // RECRUITER
     PageResponse<JobResponse> getRecruiterJobs(
             String email,
@@ -43,5 +45,10 @@ public interface JobService {
     void deleteJob(
             String email,
             Long id
+    );
+    JobResponse updateJobStatus(
+            String email,
+            Long id,
+            JobPostStatus status
     );
 }

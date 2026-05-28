@@ -1,10 +1,14 @@
 package org.example.recruitmentsystem.controller.recruiter;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.recruitmentsystem.common.ApiResponse;
 import org.example.recruitmentsystem.dto.request.CompanyRequest;
+import org.example.recruitmentsystem.dto.request.UpdateJobStatusRequest;
 import org.example.recruitmentsystem.dto.response.CompanyResponse;
+import org.example.recruitmentsystem.dto.response.JobResponse;
 import org.example.recruitmentsystem.service.CompanyService;
+import org.example.recruitmentsystem.service.JobService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -18,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class RecruiterCompanyController {
 
     private final CompanyService companyService;
-
+    private final JobService jobService;
     @GetMapping
     public ApiResponse<CompanyResponse> getMyCompany(
             @AuthenticationPrincipal Jwt jwt
@@ -50,6 +54,23 @@ public class RecruiterCompanyController {
 
         return ApiResponse.success(
                 "Tải logo công ty thành công",
+                response
+        );
+    }
+    @PatchMapping("/{id}/status")
+    public ApiResponse<JobResponse> updateStatus(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateJobStatusRequest request
+    ) {
+        JobResponse response = jobService.updateJobStatus(
+                jwt.getSubject(),
+                id,
+                request.getStatus()
+        );
+
+        return ApiResponse.success(
+                "Cập nhật trạng thái tin tuyển dụng thành công",
                 response
         );
     }

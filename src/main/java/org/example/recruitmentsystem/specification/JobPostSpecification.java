@@ -160,6 +160,18 @@ public class JobPostSpecification {
             return criteriaBuilder.equal(root.get("approvalStatus"), approvalStatus);
         };
     }
+    public static Specification<JobPost> hasCompanyId(Long companyId) {
+        return (root, query, criteriaBuilder) -> {
+            if (companyId == null) {
+                return criteriaBuilder.conjunction();
+            }
+
+            return criteriaBuilder.equal(
+                    root.get("company").get("id"),
+                    companyId
+            );
+        };
+    }
 
     public static Specification<JobPost> recruiterKeywordContains(String keyword) {
         return keywordContains(keyword);

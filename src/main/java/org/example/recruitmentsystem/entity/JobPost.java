@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.example.recruitmentsystem.enumtype.ApprovalStatus;
 import org.example.recruitmentsystem.enumtype.EmploymentType;
+import org.example.recruitmentsystem.enumtype.ExperienceLevel;
 import org.example.recruitmentsystem.enumtype.JobPostStatus;
 
 import java.math.BigDecimal;
@@ -52,8 +53,9 @@ public class JobPost {
     @Column(name = "employment_type", nullable = false, length = 30)
     private EmploymentType employmentType;
 
-    @Column(name = "experience_level", length = 50)
-    private String experienceLevel;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "experience_level", length = 30)
+    private ExperienceLevel experienceLevel;
 
     @Column(name = "salary_min")
     private BigDecimal salaryMin;

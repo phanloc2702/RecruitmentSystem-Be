@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.recruitmentsystem.enumtype.EmploymentType;
+import org.example.recruitmentsystem.enumtype.ExperienceLevel;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,8 +32,8 @@ public class RecruiterJobRequest {
     @NotNull(message = "Hình thức làm việc không được để trống")
     private EmploymentType employmentType;
 
-    @Size(max = 50, message = "Cấp bậc kinh nghiệm không được vượt quá 50 ký tự")
-    private String experienceLevel;
+    @NotNull(message = "Cấp bậc kinh nghiệm không được để trống")
+    private ExperienceLevel experienceLevel;
 
     @DecimalMin(value = "0", message = "Lương tối thiểu không hợp lệ")
     private BigDecimal salaryMin;

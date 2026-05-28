@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.recruitmentsystem.enumtype.ApprovalStatus;
 import org.example.recruitmentsystem.enumtype.EmploymentType;
+import org.example.recruitmentsystem.enumtype.ExperienceLevel;
 import org.example.recruitmentsystem.enumtype.JobPostStatus;
 
 import java.math.BigDecimal;
@@ -40,7 +41,7 @@ public class JobResponse {
 
     private EmploymentType employmentType;
 
-    private String experienceLevel;
+    private ExperienceLevel experienceLevel;
 
     private BigDecimal salaryMin;
 

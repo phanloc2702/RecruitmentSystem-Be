@@ -6,6 +6,7 @@ import org.example.recruitmentsystem.common.ApiResponse;
 import org.example.recruitmentsystem.common.PageResponse;
 import org.example.recruitmentsystem.dto.request.JobPostFilterRequest;
 import org.example.recruitmentsystem.dto.response.JobCategoryResponse;
+import org.example.recruitmentsystem.dto.response.JobFilterOptionsResponse;
 import org.example.recruitmentsystem.dto.response.JobResponse;
 import org.example.recruitmentsystem.service.JobService;
 import org.springframework.web.bind.annotation.*;
@@ -42,5 +43,12 @@ public class PublicJobController {
         List<JobCategoryResponse> response = jobService.getCategories();
 
         return ApiResponse.success("Lấy danh mục việc làm thành công", response);
+    }
+    @GetMapping("/filter-options")
+    public ApiResponse<JobFilterOptionsResponse> getFilterOptions() {
+        return ApiResponse.success(
+                "Lấy bộ lọc việc làm thành công",
+                jobService.getFilterOptions()
+        );
     }
 }

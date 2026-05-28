@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.recruitmentsystem.enumtype.EmploymentType;
+import org.example.recruitmentsystem.enumtype.ExperienceLevel;
 
 import java.math.BigDecimal;
 
@@ -18,9 +19,9 @@ public class JobPostFilterRequest extends PaginationRequest {
 
     @Size(max = 100, message = "Địa điểm không được vượt quá 100 ký tự")
     private String location;
-
+    private Long companyId;
     private EmploymentType employmentType;
-
+    private ExperienceLevel experienceLevel;
     private Long categoryId;
 
     @DecimalMin(value = "0", message = "Lương tối thiểu không hợp lệ")
