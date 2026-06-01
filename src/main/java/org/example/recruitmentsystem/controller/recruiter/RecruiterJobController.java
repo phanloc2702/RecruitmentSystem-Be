@@ -6,6 +6,7 @@ import org.example.recruitmentsystem.common.ApiResponse;
 import org.example.recruitmentsystem.common.PageResponse;
 import org.example.recruitmentsystem.dto.request.RecruiterJobFilterRequest;
 import org.example.recruitmentsystem.dto.request.RecruiterJobRequest;
+import org.example.recruitmentsystem.dto.request.UpdateJobStatusRequest;
 import org.example.recruitmentsystem.dto.response.JobResponse;
 import org.example.recruitmentsystem.service.JobService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -70,5 +71,20 @@ public class RecruiterJobController {
         jobService.deleteJob(jwt.getSubject(), id);
 
         return ApiResponse.success("Ẩn tin tuyển dụng thành công");
+    }
+    @PatchMapping("/{id}/status")
+    public ApiResponse<JobResponse> updateStatus(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateJobStatusRequest request
+    ) {
+        return ApiResponse.success(
+                "Cập nhật trạng thái thành công",
+                jobService.updateJobStatus(
+                        jwt.getSubject(),
+                        id,
+                        request.getStatus()
+                )
+        );
     }
 }
