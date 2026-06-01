@@ -169,4 +169,24 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         return applicationMapper.toResponse(savedApplication);
     }
+    @Override
+    public ApplicationResponse getRecruiterApplicationById(
+            String email,
+            Long applicationId
+    ) {
+        User recruiter = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Company company = companyRepository.findByRecruiter(recruiter)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        if (!application.getJobPost().getCompany().getId().equals(company.getId())) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return applicationMapper.toResponse(application);
+    }
 }

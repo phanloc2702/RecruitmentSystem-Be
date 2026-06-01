@@ -1,6 +1,8 @@
 package org.example.recruitmentsystem.specification;
 
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import org.example.recruitmentsystem.dto.request.AdminJobFilterRequest;
 import org.example.recruitmentsystem.entity.JobPost;
 import org.example.recruitmentsystem.enumtype.ApprovalStatus;
 import org.example.recruitmentsystem.enumtype.EmploymentType;
@@ -9,6 +11,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JobPostSpecification {
 
@@ -175,5 +179,42 @@ public class JobPostSpecification {
 
     public static Specification<JobPost> recruiterKeywordContains(String keyword) {
         return keywordContains(keyword);
+    }
+    public static Specification<JobPost> adminFilter(AdminJobFilterRequest request) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
+                String keyword = "%" + request.getKeyword().trim().toLowerCase() + "%";
+
+                predicates.add(
+                        criteriaBuilder.or(
+                                criteriaBuilder.like(
+                                        criteriaBuilder.lower(root.get("title")),
+                                        keyword
+                                ),
+                                criteriaBuilder.like(
+                                        criteriaBuilder.lower(root.get("company").get("name")),
+                                        keyword
+                                ),
+                                criteriaBuilder.like(
+                                        criteriaBuilder.lower(root.get("location")),
+                                        keyword
+                                )
+                        )
+                );
+            }
+
+            if (request.getApprovalStatus() != null) {
+                predicates.add(
+                        criteriaBuilder.equal(
+                                root.get("approvalStatus"),
+                                request.getApprovalStatus()
+                        )
+                );
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }

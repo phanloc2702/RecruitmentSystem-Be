@@ -25,7 +25,8 @@ public enum ErrorCode {
 
     APPLICATION_ALREADY_EXISTS("APPLICATION_ALREADY_EXISTS", "Bạn đã ứng tuyển công việc này rồi", HttpStatus.BAD_REQUEST),
 
-    CV_NOT_FOUND("CV_NOT_FOUND", "CV không tồn tại hoặc không thuộc về bạn", HttpStatus.BAD_REQUEST);
+    CV_NOT_FOUND("CV_NOT_FOUND", "CV không tồn tại hoặc không thuộc về bạn", HttpStatus.BAD_REQUEST),
+    JOB_NOT_FOUND("JOB_NOT_FOUND", "Công việc không tồn tại", HttpStatus.BAD_REQUEST);
     private final String code;
     private final String message;
     private final HttpStatus httpStatus;

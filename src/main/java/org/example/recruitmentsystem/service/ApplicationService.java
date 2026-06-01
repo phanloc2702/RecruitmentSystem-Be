@@ -29,4 +29,8 @@ public interface ApplicationService {
             Long applicationId,
             UpdateApplicationStatusReques request
     );
+    ApplicationResponse getRecruiterApplicationById(
+            String email,
+            Long applicationId
+    );
 }

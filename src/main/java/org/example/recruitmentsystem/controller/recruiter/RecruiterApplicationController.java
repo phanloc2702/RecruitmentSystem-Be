@@ -44,4 +44,19 @@ public class RecruiterApplicationController {
 
         return ApiResponse.success("Cập nhật trạng thái ứng tuyển thành công", response);
     }
+    @GetMapping("/{id}")
+    public ApiResponse<ApplicationResponse> getById(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id
+    ) {
+        ApplicationResponse response = applicationService.getRecruiterApplicationById(
+                jwt.getSubject(),
+                id
+        );
+
+        return ApiResponse.success(
+                "Lấy chi tiết ứng viên thành công",
+                response
+        );
+    }
 }
