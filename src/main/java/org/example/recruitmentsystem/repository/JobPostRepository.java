@@ -18,4 +18,6 @@ public interface JobPostRepository extends JpaRepository<JobPost, Long>, JpaSpec
         order by j.location asc
         """)
     List<String> findDistinctOpenApprovedLocations();
+    List<JobPost> findByCompanyIdOrderByCreatedAtDesc(Long companyId);
+    long countByCompanyId(Long companyId);
 }

@@ -13,7 +13,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface CompanyMapper {
 
     @Mapping(target = "recruiterId", source = "recruiter.id")
-    @Mapping(target = "jobCount", expression = "java(0L)")
+    @Mapping(target = "jobCount", ignore = true)
     CompanyResponse toResponse(Company company);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
