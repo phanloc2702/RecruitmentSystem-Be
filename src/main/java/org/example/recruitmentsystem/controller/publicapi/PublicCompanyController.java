@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.recruitmentsystem.common.ApiResponse;
 import org.example.recruitmentsystem.common.PageResponse;
 import org.example.recruitmentsystem.dto.request.CompanyFilterRequest;
+import org.example.recruitmentsystem.dto.response.CompanyFilterOptionsResponse;
 import org.example.recruitmentsystem.dto.response.CompanyResponse;
 import org.example.recruitmentsystem.service.CompanyService;
 import org.springframework.web.bind.annotation.*;
@@ -32,5 +33,12 @@ public class PublicCompanyController {
         CompanyResponse response = companyService.getCompanyById(id);
 
         return ApiResponse.success("Lấy chi tiết công ty thành công", response);
+    }
+    @GetMapping("/filter-options")
+    public ApiResponse<CompanyFilterOptionsResponse> getFilterOptions() {
+        return ApiResponse.success(
+                "Lấy bộ lọc công ty thành công",
+                companyService.getFilterOptions()
+        );
     }
 }

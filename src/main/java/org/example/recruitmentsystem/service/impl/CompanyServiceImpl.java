@@ -2,6 +2,7 @@ package org.example.recruitmentsystem.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.example.recruitmentsystem.dto.request.CompanyRequest;
+import org.example.recruitmentsystem.dto.response.CompanyFilterOptionsResponse;
 import org.example.recruitmentsystem.dto.response.CompanyResponse;
 import org.example.recruitmentsystem.entity.Company;
 import org.example.recruitmentsystem.entity.User;
@@ -10,6 +11,7 @@ import org.example.recruitmentsystem.exception.BusinessException;
 import org.example.recruitmentsystem.exception.ErrorCode;
 import org.example.recruitmentsystem.mapper.CompanyMapper;
 import org.example.recruitmentsystem.repository.CompanyRepository;
+import org.example.recruitmentsystem.repository.JobPostRepository;
 import org.example.recruitmentsystem.repository.UserRepository;
 import org.example.recruitmentsystem.service.CompanyService;
 import org.example.recruitmentsystem.service.FileStorageService;
@@ -39,6 +41,7 @@ public class CompanyServiceImpl implements CompanyService {
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper;
     private final FileStorageService fileStorageService;
+    private final JobPostRepository jobPostRepository;
     @Override
     public CompanyResponse getMyCompany(String email) {
         User recruiter = userRepository.findByEmail(email)
@@ -46,7 +49,6 @@ public class CompanyServiceImpl implements CompanyService {
 
         Company company = companyRepository.findByRecruiter(recruiter)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
-
         return companyMapper.toResponse(company);
     }
 
@@ -84,6 +86,7 @@ public class CompanyServiceImpl implements CompanyService {
         Specification<Company> specification = Specification
                 .where(CompanySpecification.hasStatus(CompanyStatus.APPROVED))
                 .and(CompanySpecification.keywordContains(request.getKeyword()))
+                .and(CompanySpecification.locationContains(request.getLocation()))
                 .and(CompanySpecification.industryContains(request.getIndustry()));
 
         Page<Company> companyPage = companyRepository.findAll(specification, pageable);
@@ -92,7 +95,15 @@ public class CompanyServiceImpl implements CompanyService {
                 .content(
                         companyPage.getContent()
                                 .stream()
-                                .map(companyMapper::toResponse)
+                                .map(company -> {
+                                    CompanyResponse response = companyMapper.toResponse(company);
+
+                                    response.setJobCount(
+                                            jobPostRepository.countByCompanyId(company.getId())
+                                    );
+
+                                    return response;
+                                })
                                 .toList()
                 )
                 .currentPage(companyPage.getNumber())
@@ -171,5 +182,12 @@ public class CompanyServiceImpl implements CompanyService {
 
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+    }
+    @Override
+    public CompanyFilterOptionsResponse getFilterOptions() {
+        return CompanyFilterOptionsResponse.builder()
+                .industries(companyRepository.findDistinctApprovedIndustries())
+                .locations(companyRepository.findDistinctApprovedLocations())
+                .build();
     }
 }

@@ -1,6 +1,7 @@
 package org.example.recruitmentsystem.specification;
 
 import org.example.recruitmentsystem.dto.request.AdminCompanyFilterRequest;
+import org.example.recruitmentsystem.dto.request.CompanyFilterRequest;
 import org.example.recruitmentsystem.entity.Company;
 import org.example.recruitmentsystem.enumtype.CompanyStatus;
 import org.springframework.data.jpa.domain.Specification;
@@ -51,5 +52,25 @@ public class CompanySpecification {
     public static Specification<Company> adminFilter(AdminCompanyFilterRequest request) {
         return Specification
                 .where(keywordContains(request.getKeyword()));
+    }
+    public static Specification<Company> locationContains(String location) {
+        return (root, query, criteriaBuilder) -> {
+            if (!StringUtils.hasText(location)) {
+                return criteriaBuilder.conjunction();
+            }
+
+            String likePattern = "%" + location.trim().toLowerCase() + "%";
+
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("address")),
+                    likePattern
+            );
+        };
+    }
+    public static Specification<Company> publicFilter(CompanyFilterRequest request) {
+        return Specification
+                .where(keywordContains(request.getKeyword()))
+                .and(industryContains(request.getIndustry()))
+                .and(locationContains(request.getLocation()));
     }
 }

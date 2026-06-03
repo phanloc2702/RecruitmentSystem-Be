@@ -1,6 +1,8 @@
 package org.example.recruitmentsystem.repository;
 
 import org.example.recruitmentsystem.entity.JobPost;
+import org.example.recruitmentsystem.enumtype.ApprovalStatus;
+import org.example.recruitmentsystem.enumtype.JobPostStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +22,8 @@ public interface JobPostRepository extends JpaRepository<JobPost, Long>, JpaSpec
     List<String> findDistinctOpenApprovedLocations();
     List<JobPost> findByCompanyIdOrderByCreatedAtDesc(Long companyId);
     long countByCompanyId(Long companyId);
+    List<JobPost> findByStatusAndApprovalStatus(
+            JobPostStatus status,
+            ApprovalStatus approvalStatus
+    );
 }

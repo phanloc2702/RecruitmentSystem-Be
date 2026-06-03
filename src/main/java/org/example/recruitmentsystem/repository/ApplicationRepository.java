@@ -12,4 +12,5 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
 
     boolean existsByJobPostAndCandidate(JobPost jobPost, CandidateProfile candidate);
     List<Application> findByCandidateOrderByAppliedAtDesc(CandidateProfile candidate);
+
 }

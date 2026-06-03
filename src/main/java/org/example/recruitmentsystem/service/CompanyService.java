@@ -3,6 +3,7 @@ package org.example.recruitmentsystem.service;
 import org.example.recruitmentsystem.common.PageResponse;
 import org.example.recruitmentsystem.dto.request.CompanyFilterRequest;
 import org.example.recruitmentsystem.dto.request.CompanyRequest;
+import org.example.recruitmentsystem.dto.response.CompanyFilterOptionsResponse;
 import org.example.recruitmentsystem.dto.response.CompanyResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,4 +17,5 @@ public interface CompanyService {
 
     CompanyResponse getCompanyById(Long id);
     CompanyResponse uploadLogo(String email, MultipartFile file);
+    CompanyFilterOptionsResponse getFilterOptions();
 }
