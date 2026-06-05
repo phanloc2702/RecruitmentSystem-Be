@@ -37,16 +37,13 @@ public class JobRecommendationServiceImpl implements JobRecommendationService {
     private final JobPostMapper jobPostMapper;
 
     @Override
-    public List<JobRecommendationResponse> recommendForCandidate(
-            String email,
-            int limit
-    ) {
+    public List<JobRecommendationResponse> recommendForCandidate(String email, int limit) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CandidateProfile profile = user.getCandidateProfile();
 
-        if (profile == null) {
+        if (!isProfileReady(profile)) {
             return List.of();
         }
 
@@ -65,30 +62,28 @@ public class JobRecommendationServiceImpl implements JobRecommendationService {
         return jobs.stream()
                 .filter(job -> !appliedJobIds.contains(job.getId()))
                 .map(job -> buildRecommendation(job, profile))
-                .filter(item -> item.getScore() > 0)
+                .filter(item -> item.getScore() >= 20)
                 .sorted(Comparator.comparingInt(JobRecommendationResponse::getScore).reversed())
                 .limit(limit)
                 .toList();
     }
 
-    private JobRecommendationResponse buildRecommendation(
-            JobPost job,
-            CandidateProfile profile
-    ) {
+    private JobRecommendationResponse buildRecommendation(JobPost job, CandidateProfile profile) {
         List<String> reasons = new ArrayList<>();
 
         int score = 0;
 
+        score += scoreTitle(job, profile, reasons);
         score += scoreLocation(job, profile, reasons);
         score += scoreSalary(job, profile, reasons);
         score += scoreExperience(job, profile, reasons);
-        score += scoreTitle(job, profile, reasons);
-        score += scoreFreshness(job, reasons);
-        score += scoreDeadline(job, reasons);
 
-        if (score > 100) {
-            score = 100;
+        if (score > 0) {
+            score += scoreFreshness(job, reasons);
+            score += scoreDeadline(job, reasons);
         }
+
+        score = Math.min(score, 100);
 
         JobResponse jobResponse = jobPostMapper.toResponse(job);
 
@@ -99,43 +94,65 @@ public class JobRecommendationServiceImpl implements JobRecommendationService {
                 .build();
     }
 
-    private int scoreLocation(
-            JobPost job,
-            CandidateProfile profile,
-            List<String> reasons
-    ) {
-        if (profile.getPreferredLocation() == null || job.getLocation() == null) {
+    private int scoreTitle(JobPost job, CandidateProfile profile, List<String> reasons) {
+        if (!hasText(profile.getCurrentPosition()) || !hasText(job.getTitle())) {
+            return 0;
+        }
+
+        String position = normalize(profile.getCurrentPosition());
+        String title = normalize(job.getTitle());
+
+        if (title.contains(position) || position.contains(title)) {
+            reasons.add("Vị trí công việc gần với hồ sơ hiện tại");
+            return 30;
+        }
+
+        String[] keywords = position.split("\\s+");
+        int matchCount = 0;
+
+        for (String keyword : keywords) {
+            if (keyword.length() >= 3 && title.contains(keyword)) {
+                matchCount++;
+            }
+        }
+
+        if (matchCount > 0) {
+            reasons.add("Có từ khóa nghề nghiệp phù hợp với hồ sơ");
+            return Math.min(20, 8 + matchCount * 6);
+        }
+
+        return 0;
+    }
+
+    private int scoreLocation(JobPost job, CandidateProfile profile, List<String> reasons) {
+        if (!hasText(profile.getPreferredLocation()) || !hasText(job.getLocation())) {
             return 0;
         }
 
         String candidateLocation = normalize(profile.getPreferredLocation());
         String jobLocation = normalize(job.getLocation());
 
-        if (jobLocation.contains(candidateLocation)
-                || candidateLocation.contains(jobLocation)) {
+        if (candidateLocation.equals("remote") || jobLocation.equals("remote")) {
+            reasons.add("Phù hợp với mong muốn làm việc từ xa");
+            return 20;
+        }
+
+        if (jobLocation.contains(candidateLocation) || candidateLocation.contains(jobLocation)) {
             reasons.add("Khớp địa điểm mong muốn: " + job.getLocation());
-            return 25;
+            return 20;
         }
 
         return 0;
     }
 
-    private int scoreSalary(
-            JobPost job,
-            CandidateProfile profile,
-            List<String> reasons
-    ) {
+    private int scoreSalary(JobPost job, CandidateProfile profile, List<String> reasons) {
         BigDecimal expectedMin = profile.getExpectedSalaryMin();
         BigDecimal expectedMax = profile.getExpectedSalaryMax();
 
         BigDecimal jobMin = job.getSalaryMin();
         BigDecimal jobMax = job.getSalaryMax();
 
-        if (jobMin == null && jobMax == null) {
-            return 0;
-        }
-
-        if (expectedMin == null && expectedMax == null) {
+        if ((expectedMin == null && expectedMax == null) || (jobMin == null && jobMax == null)) {
             return 0;
         }
 
@@ -145,9 +162,8 @@ public class JobRecommendationServiceImpl implements JobRecommendationService {
         BigDecimal offerMin = jobMin != null ? jobMin : BigDecimal.ZERO;
         BigDecimal offerMax = jobMax != null ? jobMax : new BigDecimal("999999999");
 
-        boolean overlap =
-                offerMax.compareTo(candidateMin) >= 0
-                        && offerMin.compareTo(candidateMax) <= 0;
+        boolean overlap = offerMax.compareTo(candidateMin) >= 0
+                && offerMin.compareTo(candidateMax) <= 0;
 
         if (overlap) {
             reasons.add("Mức lương phù hợp với kỳ vọng");
@@ -157,90 +173,45 @@ public class JobRecommendationServiceImpl implements JobRecommendationService {
         return 0;
     }
 
-    private int scoreExperience(
-            JobPost job,
-            CandidateProfile profile,
-            List<String> reasons
-    ) {
+    private int scoreExperience(JobPost job, CandidateProfile profile, List<String> reasons) {
         if (profile.getYearsOfExperience() == null
-                || job.getExperienceLevel() == null) {
+                || job.getExperienceLevel() == null
+                || !hasText(profile.getCurrentPosition())) {
             return 0;
         }
 
         int years = profile.getYearsOfExperience();
-
         String level = normalize(job.getExperienceLevel().name());
 
-        if (years == 0
-                && (level.contains("intern") || level.contains("fresher"))) {
+        if (years == 0 && (level.contains("intern") || level.contains("fresher"))) {
             reasons.add("Phù hợp với ứng viên mới bắt đầu");
             return 15;
         }
 
-        if (years <= 1
-                && (level.contains("fresher") || level.contains("junior"))) {
+        if (years <= 1 && (level.contains("fresher") || level.contains("junior"))) {
             reasons.add("Phù hợp với kinh nghiệm hiện tại");
             return 15;
         }
 
-        if (years <= 3
-                && (level.contains("junior") || level.contains("middle"))) {
+        if (years <= 3 && (level.contains("junior") || level.contains("middle"))) {
             reasons.add("Phù hợp với kinh nghiệm hiện tại");
             return 15;
         }
 
-        if (years >= 4
-                && (level.contains("senior")
-                || level.contains("lead")
-                || level.contains("manager"))) {
+        if (years >= 4 && (level.contains("senior") || level.contains("lead") || level.contains("manager"))) {
             reasons.add("Phù hợp với cấp độ kinh nghiệm");
             return 15;
-        }
-
-        return 5;
-    }
-
-    private int scoreTitle(
-            JobPost job,
-            CandidateProfile profile,
-            List<String> reasons
-    ) {
-        if (profile.getCurrentPosition() == null || job.getTitle() == null) {
-            return 0;
-        }
-
-        String position = normalize(profile.getCurrentPosition());
-        String title = normalize(job.getTitle());
-
-        if (title.contains(position) || position.contains(title)) {
-            reasons.add("Vị trí công việc gần với hồ sơ hiện tại");
-            return 20;
-        }
-
-        String[] keywords = position.split("\\s+");
-
-        for (String keyword : keywords) {
-            if (keyword.length() >= 3 && title.contains(keyword)) {
-                reasons.add("Có từ khóa nghề nghiệp phù hợp: " + keyword);
-                return 10;
-            }
         }
 
         return 0;
     }
 
-    private int scoreFreshness(
-            JobPost job,
-            List<String> reasons
-    ) {
+    private int scoreFreshness(JobPost job, List<String> reasons) {
         if (job.getCreatedAt() == null) {
             return 0;
         }
 
-        long days = ChronoUnit.DAYS.between(
-                job.getCreatedAt().toLocalDate(),
-                LocalDate.now()
-        );
+        long days = ChronoUnit.DAYS.between(job.getCreatedAt().toLocalDate(), LocalDate.now());
 
         if (days <= 7) {
             reasons.add("Tin tuyển dụng mới đăng gần đây");
@@ -254,18 +225,12 @@ public class JobRecommendationServiceImpl implements JobRecommendationService {
         return 0;
     }
 
-    private int scoreDeadline(
-            JobPost job,
-            List<String> reasons
-    ) {
+    private int scoreDeadline(JobPost job, List<String> reasons) {
         if (job.getDeadline() == null) {
             return 0;
         }
 
-        long daysLeft = ChronoUnit.DAYS.between(
-                LocalDate.now(),
-                job.getDeadline()
-        );
+        long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), job.getDeadline());
 
         if (daysLeft < 0) {
             return -100;
@@ -279,9 +244,23 @@ public class JobRecommendationServiceImpl implements JobRecommendationService {
         return 0;
     }
 
+    private boolean isProfileReady(CandidateProfile profile) {
+        if (profile == null) {
+            return false;
+        }
+
+        return hasText(profile.getCurrentPosition())
+                || hasText(profile.getPreferredLocation())
+                || profile.getYearsOfExperience() != null
+                || profile.getExpectedSalaryMin() != null
+                || profile.getExpectedSalaryMax() != null;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
     private String normalize(String value) {
-        return value == null
-                ? ""
-                : value.trim().toLowerCase();
+        return value == null ? "" : value.trim().toLowerCase();
     }
 }

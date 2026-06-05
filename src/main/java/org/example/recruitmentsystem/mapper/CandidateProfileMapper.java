@@ -16,7 +16,9 @@ public interface CandidateProfileMapper {
     @Mapping(target = "email", source = "user.email")
     CandidateProfileResponse toResponse(CandidateProfile profile);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "avatarUrl", ignore = true)
+    @Mapping(target = "avatarObjectName", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL)
     void updateEntityFromRequest(
             CandidateProfileRequest request,
             @MappingTarget CandidateProfile profile

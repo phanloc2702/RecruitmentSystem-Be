@@ -48,9 +48,8 @@ public class CandidateProfile {
     @Column(name = "current_position", length = 100)
     private String currentPosition;
 
-    @Column(name = "years_of_experience", nullable = false)
-    @Builder.Default
-    private Integer yearsOfExperience = 0;
+    @Column(name = "years_of_experience")
+    private Integer yearsOfExperience ;
 
     @Column(name = "education_level", length = 100)
     private String educationLevel;
@@ -79,11 +78,6 @@ public class CandidateProfile {
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-
-        if (this.yearsOfExperience == null) {
-            this.yearsOfExperience = 0;
-        }
-
         this.createdAt = now;
         this.updatedAt = now;
     }
