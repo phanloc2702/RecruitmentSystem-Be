@@ -25,7 +25,7 @@ public class CandidateProfileResponse {
     private String phone;
 
     private String avatarUrl;
-
+    private String avatarObjectName;
     private LocalDate dateOfBirth;
 
     private Gender gender;

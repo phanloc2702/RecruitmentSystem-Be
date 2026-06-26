@@ -32,7 +32,7 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
         CandidateProfile profile = candidateProfileRepository.findByUser(user)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
 
-        return candidateProfileMapper.toResponse(profile);
+        return toResponseWithAvatarUrl(profile);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
 
         CandidateProfile savedProfile = candidateProfileRepository.save(profile);
 
-        return candidateProfileMapper.toResponse(savedProfile);
+        return toResponseWithAvatarUrl(profile);
     }
     @Override
     @Transactional
@@ -70,10 +70,8 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
                 "candidate-avatars"
         );
 
-        String avatarUrl = fileStorageService.getFileUrl(newObjectName);
-
         profile.setAvatarObjectName(newObjectName);
-        profile.setAvatarUrl(avatarUrl);
+        profile.setAvatarUrl(null);
 
         CandidateProfile savedProfile = candidateProfileRepository.save(profile);
 
@@ -81,7 +79,7 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
             fileStorageService.deleteFile(oldObjectName);
         }
 
-        return candidateProfileMapper.toResponse(savedProfile);
+        return toResponseWithAvatarUrl(profile);
     }
     private void validateAvatarFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -102,5 +100,17 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
                         || contentType.equals("image/webp"))) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+    }
+    private CandidateProfileResponse toResponseWithAvatarUrl(CandidateProfile profile) {
+        CandidateProfileResponse response = candidateProfileMapper.toResponse(profile);
+
+        if (profile.getAvatarObjectName() != null
+                && !profile.getAvatarObjectName().isBlank()) {
+            response.setAvatarUrl(
+                    fileStorageService.getFileUrl(profile.getAvatarObjectName())
+            );
+        }
+
+        return response;
     }
 }

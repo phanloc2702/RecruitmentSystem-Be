@@ -49,7 +49,7 @@ public class CompanyServiceImpl implements CompanyService {
 
         Company company = companyRepository.findByRecruiter(recruiter)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
-        return companyMapper.toResponse(company);
+        return toResponseWithLogoUrl(company);
     }
 
     @Override
@@ -121,7 +121,7 @@ public class CompanyServiceImpl implements CompanyService {
             throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);
         }
 
-        return companyMapper.toResponse(company);
+        return toResponseWithLogoUrl(company);
     }
     @Override
     @Transactional
@@ -144,9 +144,7 @@ public class CompanyServiceImpl implements CompanyService {
                 "company-logos"
         );
 
-        String logoUrl = fileStorageService.getFileUrl(
-                newObjectName
-        );
+        String logoUrl = fileStorageService.getFileUrl(newObjectName);
 
         company.setLogoObjectName(newObjectName);
         company.setLogoUrl(logoUrl);
@@ -189,5 +187,19 @@ public class CompanyServiceImpl implements CompanyService {
                 .industries(companyRepository.findDistinctApprovedIndustries())
                 .locations(companyRepository.findDistinctApprovedLocations())
                 .build();
+    }
+    private CompanyResponse toResponseWithLogoUrl(Company company) {
+        CompanyResponse response = companyMapper.toResponse(company);
+
+        if (company.getLogoObjectName() != null
+                && !company.getLogoObjectName().isBlank()) {
+            response.setLogoUrl(
+                    fileStorageService.getFileUrl(company.getLogoObjectName())
+            );
+        }
+
+        response.setJobCount(jobPostRepository.countByCompanyId(company.getId()));
+
+        return response;
     }
 }
