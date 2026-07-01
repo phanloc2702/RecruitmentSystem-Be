@@ -2,6 +2,17 @@ server:
   port: 8080
 
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: phanloc270202@gmail.com
+    password: cqhs orev irdm aquh
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   application:
     name: RecruitmentSystem
 
@@ -26,3 +37,6 @@ minio:
   access-key: minioadmin
   secret-key: minioadmin
   bucket-name: recruitment
+
+app:
+  frontend-url: http://localhost:5173
