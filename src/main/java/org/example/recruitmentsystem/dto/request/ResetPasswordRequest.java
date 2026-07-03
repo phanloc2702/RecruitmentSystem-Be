@@ -13,6 +13,5 @@ public class ResetPasswordRequest {
     private String token;
 
     @NotBlank(message = "Mật khẩu không được để trống")
-    @Size(min = 8, max = 100)
     private String newPassword;
 }

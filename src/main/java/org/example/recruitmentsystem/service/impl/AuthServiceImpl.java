@@ -142,7 +142,6 @@ public class AuthServiceImpl implements AuthService {
 
                     emailService.sendPasswordResetEmail(
                             user.getEmail(),
-                            user.getFullName(),
                             link
                     );
                 });

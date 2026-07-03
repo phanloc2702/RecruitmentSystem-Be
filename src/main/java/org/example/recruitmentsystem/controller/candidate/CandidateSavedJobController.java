@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.recruitmentsystem.common.ApiResponse;
 import org.example.recruitmentsystem.common.PageResponse;
-import org.example.recruitmentsystem.dto.request.PaginationRequest;
+import org.example.recruitmentsystem.dto.request.SavedJobFilterRequest;
 import org.example.recruitmentsystem.dto.response.SavedJobResponse;
 import org.example.recruitmentsystem.service.SavedJobService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,7 +23,7 @@ public class CandidateSavedJobController {
     @GetMapping
     public ApiResponse<PageResponse<SavedJobResponse>> getMySavedJobs(
             @AuthenticationPrincipal Jwt jwt,
-            @Valid @ModelAttribute PaginationRequest request
+            @Valid @ModelAttribute SavedJobFilterRequest request
     ) {
         PageResponse<SavedJobResponse> response = savedJobService.getMySavedJobs(
                 jwt.getSubject(),

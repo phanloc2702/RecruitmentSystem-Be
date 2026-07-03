@@ -14,11 +14,11 @@ public class NotificationResponse {
 
     private Long id;
 
+    private NotificationType type;
+
     private String title;
 
-    private String content;
-
-    private NotificationType type;
+    private String message;
 
     private String redirectUrl;
 

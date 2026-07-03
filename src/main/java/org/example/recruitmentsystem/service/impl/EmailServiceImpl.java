@@ -20,7 +20,6 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPasswordResetEmail(
             String to,
-            String fullName,
             String resetLink
     ) {
 
@@ -53,7 +52,7 @@ public class EmailServiceImpl implements EmailService {
                     <br/>
 
                     <p>JobViet Team</p>
-                    """.formatted(fullName, resetLink), true);
+                    """.formatted("", resetLink), true);
 
             mailSender.send(message);
 

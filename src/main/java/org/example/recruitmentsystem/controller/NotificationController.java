@@ -1,15 +1,14 @@
 package org.example.recruitmentsystem.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.recruitmentsystem.common.ApiResponse;
-import org.example.recruitmentsystem.common.PageResponse;
-import org.example.recruitmentsystem.dto.request.PaginationRequest;
 import org.example.recruitmentsystem.dto.response.NotificationResponse;
 import org.example.recruitmentsystem.service.NotificationService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -19,47 +18,51 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public ApiResponse<PageResponse<NotificationResponse>> getMyNotifications(
-            @AuthenticationPrincipal Jwt jwt,
-            @Valid @ModelAttribute PaginationRequest request
+    public ApiResponse<List<NotificationResponse>> getMyNotifications(
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        PageResponse<NotificationResponse> response =
-                notificationService.getMyNotifications(
-                        jwt.getSubject(),
-                        request
-                );
+        String email = jwt.getSubject();
 
-        return ApiResponse.success(
-                "Lấy danh sách thông báo thành công",
-                response
-        );
+        return ApiResponse.<List<NotificationResponse>>builder()
+                .data(notificationService.getMyNotifications(email))
+                .build();
+    }
+
+    @GetMapping("/unread-count")
+    public ApiResponse<Long> getUnreadCount(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String email = jwt.getSubject();
+
+        return ApiResponse.<Long>builder()
+                .data(notificationService.countUnread(email))
+                .build();
     }
 
     @PatchMapping("/{id}/read")
-    public ApiResponse<NotificationResponse> markAsRead(
+    public ApiResponse<Void> markAsRead(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long id
     ) {
-        NotificationResponse response =
-                notificationService.markAsRead(
-                        jwt.getSubject(),
-                        id
-                );
+        String email = jwt.getSubject();
 
-        return ApiResponse.success(
-                "Đánh dấu đã đọc thành công",
-                response
-        );
+        notificationService.markAsRead(email, id);
+
+        return ApiResponse.<Void>builder()
+                .message("Đã đánh dấu là đã đọc.")
+                .build();
     }
 
     @PatchMapping("/read-all")
     public ApiResponse<Void> markAllAsRead(
             @AuthenticationPrincipal Jwt jwt
     ) {
-        notificationService.markAllAsRead(jwt.getSubject());
+        String email = jwt.getSubject();
 
-        return ApiResponse.success(
-                "Đánh dấu tất cả thông báo đã đọc thành công"
-        );
+        notificationService.markAllAsRead(email);
+
+        return ApiResponse.<Void>builder()
+                .message("Đã đánh dấu tất cả là đã đọc.")
+                .build();
     }
 }

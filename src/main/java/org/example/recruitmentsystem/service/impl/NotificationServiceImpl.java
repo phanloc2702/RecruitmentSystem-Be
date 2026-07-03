@@ -1,119 +1,45 @@
 package org.example.recruitmentsystem.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.example.recruitmentsystem.common.PageResponse;
-import org.example.recruitmentsystem.common.utils.PaginationUtils;
-import org.example.recruitmentsystem.dto.request.PaginationRequest;
 import org.example.recruitmentsystem.dto.response.NotificationResponse;
 import org.example.recruitmentsystem.entity.Notification;
 import org.example.recruitmentsystem.entity.User;
 import org.example.recruitmentsystem.enumtype.NotificationType;
 import org.example.recruitmentsystem.exception.BusinessException;
 import org.example.recruitmentsystem.exception.ErrorCode;
-import org.example.recruitmentsystem.mapper.NotificationMapper;
 import org.example.recruitmentsystem.repository.NotificationRepository;
 import org.example.recruitmentsystem.repository.UserRepository;
 import org.example.recruitmentsystem.service.NotificationService;
-import org.example.recruitmentsystem.specification.NotificationSpecification;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 
-    private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
-    private final NotificationMapper notificationMapper;
-
-    @Override
-    public PageResponse<NotificationResponse> getMyNotifications(
-            String email,
-            PaginationRequest request
-    ) {
-        User user = getUserByEmail(email);
-
-        Pageable pageable = PaginationUtils.buildPageable(request);
-
-        Specification<Notification> specification = Specification
-                .where(NotificationSpecification.belongsToUser(user.getId()));
-
-        Page<Notification> notificationPage = notificationRepository.findAll(
-                specification,
-                pageable
-        );
-
-        return PageResponse.<NotificationResponse>builder()
-                .content(
-                        notificationPage.getContent()
-                                .stream()
-                                .map(notificationMapper::toResponse)
-                                .toList()
-                )
-                .currentPage(notificationPage.getNumber())
-                .totalPages(notificationPage.getTotalPages())
-                .totalElements(notificationPage.getTotalElements())
-                .pageSize(notificationPage.getSize())
-                .build();
-    }
-
-    @Override
-    @Transactional
-    public NotificationResponse markAsRead(String email, Long notificationId) {
-        User user = getUserByEmail(email);
-
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
-
-        if (!notification.getUser().getId().equals(user.getId())) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        notification.setIsRead(true);
-
-        Notification savedNotification = notificationRepository.save(notification);
-
-        return notificationMapper.toResponse(savedNotification);
-    }
-
-    @Override
-    @Transactional
-    public void markAllAsRead(String email) {
-        User user = getUserByEmail(email);
-
-        Specification<Notification> specification = Specification
-                .where(NotificationSpecification.belongsToUser(user.getId()));
-
-        Page<Notification> notificationPage = notificationRepository.findAll(
-                specification,
-                Pageable.unpaged()
-        );
-
-        notificationPage.getContent().forEach(notification -> notification.setIsRead(true));
-
-        notificationRepository.saveAll(notificationPage.getContent());
-    }
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public void createNotification(
-            Long userId,
-            String title,
-            String content,
+            User user,
             NotificationType type,
+            String title,
+            String message,
             String redirectUrl
     ) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        if (user == null) {
+            return;
+        }
 
         Notification notification = Notification.builder()
                 .user(user)
-                .title(title)
-                .content(content)
                 .type(type)
+                .title(title)
+                .message(message)
                 .redirectUrl(redirectUrl)
                 .isRead(false)
                 .build();
@@ -121,8 +47,66 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.save(notification);
     }
 
+    @Override
+    public List<NotificationResponse> getMyNotifications(String email) {
+        User user = getUserByEmail(email);
+
+        return notificationRepository.findByUserOrderByCreatedAtDesc(user)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
+    public Long countUnread(String email) {
+        User user = getUserByEmail(email);
+
+        return notificationRepository.countByUserAndIsReadFalse(user);
+    }
+
+    @Override
+    @Transactional
+    public void markAsRead(String email, Long notificationId) {
+        User user = getUserByEmail(email);
+
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        if (!notification.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        notification.setIsRead(true);
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional
+    public void markAllAsRead(String email) {
+        User user = getUserByEmail(email);
+
+        List<Notification> notifications =
+                notificationRepository.findByUserOrderByCreatedAtDesc(user);
+
+        notifications.forEach(notification -> notification.setIsRead(true));
+
+        notificationRepository.saveAll(notifications);
+    }
+
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private NotificationResponse toResponse(Notification notification) {
+        return NotificationResponse.builder()
+                .id(notification.getId())
+                .type(notification.getType())
+                .title(notification.getTitle())
+                .message(notification.getMessage())
+                .redirectUrl(notification.getRedirectUrl())
+                .isRead(notification.getIsRead())
+                .createdAt(notification.getCreatedAt())
+                .build();
     }
 }

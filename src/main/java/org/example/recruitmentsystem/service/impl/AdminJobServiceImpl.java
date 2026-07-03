@@ -7,12 +7,15 @@ import org.example.recruitmentsystem.common.utils.PaginationUtils;
 import org.example.recruitmentsystem.dto.request.AdminJobFilterRequest;
 import org.example.recruitmentsystem.dto.response.JobResponse;
 import org.example.recruitmentsystem.entity.JobPost;
+import org.example.recruitmentsystem.entity.User;
 import org.example.recruitmentsystem.enumtype.ApprovalStatus;
+import org.example.recruitmentsystem.enumtype.NotificationType;
 import org.example.recruitmentsystem.exception.BusinessException;
 import org.example.recruitmentsystem.exception.ErrorCode;
 import org.example.recruitmentsystem.mapper.JobPostMapper;
 import org.example.recruitmentsystem.repository.JobPostRepository;
 import org.example.recruitmentsystem.service.AdminJobService;
+import org.example.recruitmentsystem.service.NotificationService;
 import org.example.recruitmentsystem.specification.JobPostSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +27,7 @@ public class AdminJobServiceImpl implements AdminJobService {
 
     private final JobPostRepository jobPostRepository;
     private final JobPostMapper jobPostMapper;
-
+    private final NotificationService notificationService;
     @Override
     public PageResponse<JobResponse> getJobs(AdminJobFilterRequest request) {
         Pageable pageable = PaginationUtils.buildPageable(request);
@@ -59,6 +62,27 @@ public class AdminJobServiceImpl implements AdminJobService {
         jobPost.setApprovalStatus(approvalStatus);
 
         JobPost savedJob = jobPostRepository.save(jobPost);
+        User recruiter = jobPost.getCompany().getRecruiter();
+
+        if (jobPost.getApprovalStatus() == ApprovalStatus.APPROVED) {
+            notificationService.createNotification(
+                    recruiter,
+                    NotificationType.JOB_APPROVED,
+                    "Tin tuyển dụng đã được duyệt",
+                    "Tin \"" + jobPost.getTitle() + "\" đã được admin duyệt.",
+                    "/recruiter/jobs/" + jobPost.getId()
+            );
+        }
+
+        if (jobPost.getApprovalStatus() == ApprovalStatus.REJECTED) {
+            notificationService.createNotification(
+                    recruiter,
+                    NotificationType.JOB_REJECTED,
+                    "Tin tuyển dụng bị từ chối",
+                    "Tin \"" + jobPost.getTitle() + "\" đã bị admin từ chối.",
+                    "/recruiter/jobs/" + jobPost.getId()
+            );
+        }
 
         return jobPostMapper.toResponse(savedJob);
     }

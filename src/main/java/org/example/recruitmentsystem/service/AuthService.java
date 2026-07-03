@@ -15,17 +15,9 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
 
     UserResponse getCurrentUser(String email);
+
     void forgotPassword(ForgotPasswordRequest request);
 
     void resetPassword(ResetPasswordRequest request);
 
-    @Transactional
-    void resetPassword(
-            ResetPasswordRequest request
-    );
-
-    @Transactional
-    void resetPassword(
-            ResetPasswordRequest request
-    );
 }

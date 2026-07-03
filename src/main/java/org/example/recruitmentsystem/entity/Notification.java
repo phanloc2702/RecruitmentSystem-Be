@@ -19,21 +19,20 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // notifications.user_id
+    // Người nhận thông báo
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 200)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String content;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    @Builder.Default
-    private NotificationType type = NotificationType.SYSTEM_NOTIFICATION;
+    private NotificationType type;
+
+    @Column(nullable = false, length = 255)
+    private String title;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String message;
 
     @Column(name = "redirect_url", length = 500)
     private String redirectUrl;
@@ -47,10 +46,6 @@ public class Notification {
 
     @PrePersist
     protected void onCreate() {
-        if (this.type == null) {
-            this.type = NotificationType.SYSTEM_NOTIFICATION;
-        }
-
         if (this.isRead == null) {
             this.isRead = false;
         }

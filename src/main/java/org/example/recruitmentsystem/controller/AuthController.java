@@ -3,8 +3,10 @@ package org.example.recruitmentsystem.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.recruitmentsystem.common.ApiResponse;
+import org.example.recruitmentsystem.dto.request.ForgotPasswordRequest;
 import org.example.recruitmentsystem.dto.request.LoginRequest;
 import org.example.recruitmentsystem.dto.request.RegisterRequest;
+import org.example.recruitmentsystem.dto.request.ResetPasswordRequest;
 import org.example.recruitmentsystem.dto.response.AuthResponse;
 import org.example.recruitmentsystem.dto.response.UserResponse;
 import org.example.recruitmentsystem.service.AuthService;
@@ -45,5 +47,28 @@ public class AuthController {
         UserResponse response = authService.getCurrentUser(email);
 
         return ApiResponse.success("Lấy thông tin người dùng thành công", response);
+    }
+    @PostMapping("/forgot-password")
+    public ApiResponse<Void> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+
+        authService.forgotPassword(request);
+
+        return ApiResponse.<Void>builder()
+                .message("Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.")
+                .build();
+    }
+
+    @PostMapping("/reset-password")
+    public ApiResponse<Void> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+
+        authService.resetPassword(request);
+
+        return ApiResponse.<Void>builder()
+                .message("Đặt lại mật khẩu thành công.")
+                .build();
     }
 }

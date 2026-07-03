@@ -11,11 +11,13 @@ import org.example.recruitmentsystem.entity.*;
 import org.example.recruitmentsystem.enumtype.ApplicationStatus;
 import org.example.recruitmentsystem.enumtype.ApprovalStatus;
 import org.example.recruitmentsystem.enumtype.JobPostStatus;
+import org.example.recruitmentsystem.enumtype.NotificationType;
 import org.example.recruitmentsystem.exception.BusinessException;
 import org.example.recruitmentsystem.exception.ErrorCode;
 import org.example.recruitmentsystem.mapper.ApplicationMapper;
 import org.example.recruitmentsystem.repository.*;
 import org.example.recruitmentsystem.service.ApplicationService;
+import org.example.recruitmentsystem.service.NotificationService;
 import org.example.recruitmentsystem.specification.ApplicationSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +36,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final ApplicationMapper applicationMapper;
     private final CandidateCvRepository candidateCvRepository;
+    private final NotificationService notificationService;
     @Override
     @Transactional
     public ApplicationResponse applyJob(String email, ApplicationRequest request) {
@@ -78,6 +81,15 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .build();
 
         Application savedApplication = applicationRepository.save(application);
+        User recruiter = jobPost.getCompany().getRecruiter();
+
+        notificationService.createNotification(
+                recruiter,
+                NotificationType.APPLICATION_RECEIVED,
+                "Có ứng viên mới ứng tuyển",
+                candidate.getFullName() + " đã ứng tuyển vào vị trí " + jobPost.getTitle(),
+                "/recruiter/applications/" + savedApplication.getId()
+        );
 
         return applicationMapper.toResponse(savedApplication);
     }
@@ -166,6 +178,16 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setStatus(request.getStatus());
 
         Application savedApplication = applicationRepository.save(application);
+        User candidateUser = application.getCandidate().getUser();
+
+        notificationService.createNotification(
+                candidateUser,
+                NotificationType.APPLICATION_STATUS_UPDATED,
+                "Trạng thái ứng tuyển đã được cập nhật",
+                "Đơn ứng tuyển vị trí " + application.getJobPost().getTitle()
+                        + " đã được cập nhật sang trạng thái " + application.getStatus(),
+                "/candidate/applications"
+        );
 
         return applicationMapper.toResponse(savedApplication);
     }

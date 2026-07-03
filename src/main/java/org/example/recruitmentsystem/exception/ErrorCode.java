@@ -27,7 +27,8 @@ public enum ErrorCode {
     COMPANY_NOT_FOUND("COMPANY_NOT_FOUND", "Công ty không tồn tại", HttpStatus.BAD_REQUEST),
     CV_NOT_FOUND("CV_NOT_FOUND", "CV không tồn tại hoặc không thuộc về bạn", HttpStatus.BAD_REQUEST),
     JOB_NOT_FOUND("JOB_NOT_FOUND", "Công việc không tồn tại", HttpStatus.BAD_REQUEST),
-    INVALID_TOKEN("INVALID_TOKEN", "TOKEN KHÔNG ĐÚNG", HttpStatus.BAD_REQUEST);
+    INVALID_TOKEN("INVALID_TOKEN", "TOKEN KHÔNG ĐÚNG", HttpStatus.BAD_REQUEST),
+    FORBIDDEN("FORBIDDENT","BỊ CẤM", HttpStatus.BAD_REQUEST);
     private final String code;
     private final String message;
     private final HttpStatus httpStatus;
